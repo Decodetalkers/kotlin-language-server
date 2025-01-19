@@ -16,7 +16,6 @@ import org.javacs.kt.util.AsyncExecutor
 import org.javacs.kt.util.TemporaryDirectory
 import org.javacs.kt.util.parseURI
 import org.javacs.kt.externalsources.*
-import org.javacs.kt.index.SymbolIndex
 import java.io.Closeable
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -156,6 +155,12 @@ class KotlinLanguageServer(
 
     private fun connectLoggingBackend() {
         val backend: (LogMessage) -> Unit = {
+            if (it.level == LogLevel.ALERT) {
+                client.showMessage(MessageParams().apply {
+                    type = MessageType.Error
+                    message = it.message
+                })
+            }
             client.logMessage(MessageParams().apply {
                 type = it.level.toLSPMessageType()
                 message = it.message
@@ -166,6 +171,7 @@ class KotlinLanguageServer(
     }
 
     private fun LogLevel.toLSPMessageType(): MessageType = when (this) {
+        LogLevel.ALERT -> MessageType.Error
         LogLevel.ERROR -> MessageType.Error
         LogLevel.WARN -> MessageType.Warning
         LogLevel.INFO -> MessageType.Info

@@ -1,9 +1,6 @@
 package org.javacs.kt
 
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.util.*
-import java.util.logging.Formatter
 import java.util.logging.LogRecord
 import java.util.logging.Handler
 import java.util.logging.Level
@@ -32,6 +29,7 @@ private class JULRedirector(private val downstream: Logger) : Handler() {
 
 enum class LogLevel(val value: Int) {
     NONE(100),
+    ALERT(3),
     ERROR(2),
     WARN(1),
     INFO(0),
@@ -121,10 +119,14 @@ class Logger {
 
     fun trace(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.TRACE, msg, placeholders)
 
+    fun alert(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.ALERT, msg, placeholders)
+
     fun deepTrace(msg: String, vararg placeholders: Any?) =
         logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
 
     // Convenience logging methods using inlined lambdas
+
+    inline fun alert(crossinline msg: () -> String) = logWithLambdaAt(LogLevel.ALERT, msg)
 
     inline fun error(crossinline msg: () -> String) = logWithLambdaAt(LogLevel.ERROR, msg)
 
@@ -141,6 +143,7 @@ class Logger {
     fun setTracing() {
         tracingLog = true
     }
+
     fun connectJULFrontend() {
         val rootLogger = java.util.logging.Logger.getLogger("")
         rootLogger.addHandler(JULRedirector(this))
@@ -157,7 +160,6 @@ class Logger {
     }
 
     fun connectStdioBackend() {
-        connectOutputBackend { println(it.formatted) }
         connectOutputBackend { System.err.println(it.formatted) }
     }
 
@@ -198,7 +200,7 @@ class Logger {
 
     private fun format(msg: String): String {
         val time = if (logTime) "${Instant.now()} " else ""
-        var thread = Thread.currentThread().name
+        val thread = Thread.currentThread().name
 
         return time + shortenOrPad(thread, 10) + msg.trimEnd()
     }

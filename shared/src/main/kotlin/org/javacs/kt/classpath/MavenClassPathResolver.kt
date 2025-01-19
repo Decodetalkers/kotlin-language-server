@@ -125,7 +125,7 @@ private fun runCommand(pom: Path, command: List<String>) {
     val (result, errors) = execAndReadStdoutAndStderr(command, workingDirectory)
     LOG.debug(result)
     if ("BUILD FAILURE" in errors) {
-        LOG.warn("Maven task failed: {}", errors.lines().firstOrNull())
+        LOG.alert("Maven task failed: {}", errors.lines().firstOrNull())
     }
 }
 
